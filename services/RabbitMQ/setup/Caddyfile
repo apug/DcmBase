@@ -1,0 +1,11 @@
+# RabbitMQ Management UI
+rabbit.{$CADDY_MAIN_DOMAIN} {
+	reverse_proxy rabbitmq:15672 {
+		header_up X-Forwarded-Proto {scheme}
+		header_up X-Forwarded-For {remote_host}
+		header_up X-Forwarded-Port {server_port}
+		header_up X-Real-IP {remote_host}
+		header_up Host {host}
+	}
+	tls internal
+}

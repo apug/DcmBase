@@ -1,0 +1,28 @@
+# Keycloak
+kc.{$CADDY_MAIN_DOMAIN} {
+	reverse_proxy keycloak:8080 {
+		# Headers richiesti da Keycloak per reverse proxy
+		header_up X-Forwarded-Proto {scheme}
+		header_up X-Forwarded-For {remote_host}
+		header_up X-Forwarded-Port {port}
+		header_up X-Real-IP {remote_host}
+
+		# Header Host importante per Keycloak
+		header_up Host {host}
+	}
+
+	# TLS per ambiente di sviluppo
+	tls internal
+}
+
+# Admin console separata
+kcadmin.{$CADDY_MAIN_DOMAIN} {
+	reverse_proxy keycloak:8080 {
+		header_up X-Forwarded-Proto {scheme}
+		header_up X-Forwarded-For {remote_host}
+		header_up X-Forwarded-Port {port}
+		header_up X-Real-IP {remote_host}
+		header_up Host {host}
+	}
+	tls internal
+}

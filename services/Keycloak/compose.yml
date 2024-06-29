@@ -1,0 +1,91 @@
+services:
+  keycloak-db-init:
+    image: postgres:17-alpine
+    container_name: keycloak-db-init
+    depends_on:
+      postgresql:
+        condition: service_healthy
+    env_file:
+      - "${DCM_CONFIG_DIR}/config.env"
+    volumes:
+      - ./setup/db/01-init-keycloak-db.sh:/init-keycloak-db.sh:ro,z
+    entrypoint: ["sh", "-c"]
+    command:
+      - |
+        echo "Initializing Keycloak database..."
+        sh /init-keycloak-db.sh
+    restart: "no"
+    networks:
+      - db
+
+  keycloak:
+    depends_on:
+      caddy:
+        condition: service_started
+      keycloak-db-init:
+        condition: service_completed_successfully
+    build:
+      context: .
+      dockerfile: Dockerfile
+    restart: unless-stopped
+
+    command:
+      - start
+      - --optimized
+    # ports:
+    #   - 8080:8080
+    environment:
+      # Database PostgreSQL (connessione alla rete "database")
+      KC_DB: postgres
+      # Configurazione reverse proxy (Caddy)
+      KC_PROXY_HEADERS: xforwarded
+      # HTTP settings
+      KC_HTTP_ENABLED: true
+      # Health checks
+      KC_HEALTH_ENABLED: true
+      KC_METRICS_ENABLED: true
+      KC_HOSTNAME_BACKCHANNEL_DYNAMIC: false
+      KC_HOSTNAME_STRICT: true
+      KC_DB_URL_HOST: postgresql
+      KC_DB_URL_PORT: 5432
+      # KC_DB_URL: jdbc:postgresql://postgresql:5432/${KC_DB_NAME}
+
+    env_file:
+      - "${DCM_CONFIG_DIR}/config.env"
+
+    # Health check
+    healthcheck:
+      test:
+        ["CMD-SHELL", "exec 3<>/dev/tcp/127.0.0.1/8080 && echo 'OK' || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+
+    # Resource limits
+    deploy:
+      resources:
+        limits:
+          cpus: "2.0"
+          memory: 2G
+        reservations:
+          cpus: "0.5"
+          memory: 512M
+
+    # Logging
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+    volumes:
+      - ${DCM_VOLUMES_DIR}/DCMBase/Keycloak/cache:/opt/keycloak/data/cache:z
+    tmpfs:
+      - /tmp
+      - /opt/keycloak/data/tmp
+
+    # Networks - collegamento alle reti esistenti
+    networks:
+      - web # Per comunicare con Caddy
+      - db # Per comunicare con PostgreSQL

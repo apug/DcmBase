@@ -1,0 +1,18 @@
+services:
+  echo1:
+    depends_on:
+      caddy:
+        condition: service_started
+    image: mendhak/http-https-echo
+    restart: unless-stopped
+    networks:
+      - web
+
+  echo2:
+    depends_on:
+      caddy:
+        condition: service_started
+    image: mendhak/http-https-echo
+    restart: unless-stopped
+    networks:
+      - web

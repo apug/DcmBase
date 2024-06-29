@@ -1,0 +1,34 @@
+services:
+  mariadb:
+    depends_on:
+      bootstrap:
+        condition: service_completed_successfully
+    image: mariadb:lts
+    restart:
+      on-failure
+      #environment:
+      #      MYSQL_ROOT_PASSWORD: my-secret-pw
+      #MYSQL_DATABASE: mydatabase
+      #MYSQL_USER: user
+      #MYSQL_PASSWORD: password
+    command: --general-log-file=q.log --general-log=1 --sql-mode=
+    # command: --general-log-file=q.log --general-log=1 --skip-grant-tables --sql-mode=
+    env_file:
+      - "${DCM_CONFIG_DIR}/config.env"
+    ports:
+      - "3306:3306"
+    volumes:
+      - ${DCM_VOLUMES_DIR}/DCMBase/MariaDB/data:/var/lib/mysql:z
+      - ${DCM_VOLUMES_DIR}/DCMBase/MariaDB/share:/tmp/share:z
+      - ./init:/docker-entrypoint-initdb.d:z
+    networks:
+      - db
+    healthcheck:
+      test: ["CMD", "healthcheck.sh", "--connect", "--innodb_initialized"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+networks:
+  database:
+    external: true

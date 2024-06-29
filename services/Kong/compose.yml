@@ -1,0 +1,102 @@
+include:
+  - ${DCM_CONFIG_DIR}/DCMBase/Kong/kong-plugins.yml
+
+# Common environment variables used by Kong services (bootstrap and CP)
+x-kong-config: &kong-env
+  KONG_PG_PASSWORD: kong # Database password# Common environment variables used by Kong services (bootstrap and CP)
+  KONG_DATABASE: postgres
+  KONG_PG_HOST: postgresql
+  KONG_PG_PORT: 5432
+
+services:
+  # kong-database:
+  #   container_name: kong-database
+  #   image: postgres:latest # Official Postgres image
+  #   restart: on-failure # Restart if the container fails
+  #   volumes:
+  #     - kong_db_data:/var/lib/postgresql/data # Mount the volume for persistent data
+  #   networks:
+  #     - kong-net # Connect to the shared Kong network
+  #   environment:
+  #     POSTGRES_USER: kong # Set DB user inside the container
+  #     POSTGRES_DB: kong # Create this database on first run
+  #     POSTGRES_PASSWORD: kong # Set the password for the DB user
+  #   healthcheck: # Ensure the DB is ready before starting dependent services
+  #     test: ["CMD", "pg_isready", "-U", "kong"]
+  #     interval: 5s
+  #     timeout: 10s
+  #     retries: 10
+  #   ports:
+  #     - "5432:5432" # Optional: expose Postgres on localhost for debugging
+
+  kong-db-init:
+    image: postgres:17-alpine
+    container_name: kong-db-init
+    depends_on:
+      postgresql:
+        condition: service_healthy
+    env_file:
+      - "${DCM_CONFIG_DIR}/config.env"
+    volumes:
+      - ./setup/db/02-init-kong-db.sh:/init-kong-db.sh:ro,z
+    entrypoint: ["sh", "-c"]
+    command:
+      - |
+        echo "Initializing Kong database..."
+        sh /init-kong-db.sh
+    restart: "no"
+    networks:
+      - db
+
+  kong-bootstrap:
+    depends_on:
+      kong-db-init:
+        condition: service_completed_successfully
+    image: "${GW_IMAGE:-kong/kong-gateway:3.10.0.2}" # Kong Gateway image (default to latest version)
+    container_name: kong-bootstrap
+    # depends_on:
+    #   kong-database:
+    #     condition: service_healthy # Wait until Postgres is up and healthy
+    env_file:
+      - "${DCM_CONFIG_DIR}/config.env"
+    restart: on-failure
+    init: true
+    stop_grace_period: 30s
+    command: kong migrations bootstrap # Run DB migrations to initialize Kong schema
+    environment:
+      <<: *kong-env # Reuse environment config from x-kong-config
+    networks:
+      # - kong-net
+      - db
+      - web
+
+  kong-cp:
+    image: "${GW_IMAGE:-kong/kong-gateway:3.10.0.2}" # Main Kong Gateway Control Plane (default to latest version)
+    restart: unless-stopped
+    env_file:
+      - "${DCM_CONFIG_DIR}/config.env"
+    init: true
+    stop_grace_period: 30s
+    environment:
+      <<: *kong-env # Reuse environment config from x-kong-config      KONG_ADMIN_LISTEN: 0.0.0.0:8001 # Admin API on HTTP only (TLS handled by Caddy)
+      KONG_ADMIN_LISTEN: 0.0.0.0:8001 # Kong Manager on HTTP only (TLS handled by Caddy)
+      KONG_ADMIN_GUI_LISTEN: 0.0.0.0:8002 # Kong Manager on HTTP only (TLS handled by Caddy)
+      KONG_LOG_LEVEL: debug
+    depends_on:
+      caddy:
+        condition: service_started
+      kong-bootstrap:
+        condition: service_completed_successfully # Start only after bootstrap has succeeded
+    # All ports are handled by Caddy reverse proxy
+    # Uncomment ports below for direct access during debugging
+    # ports:
+    #   - "8000:8000" # Proxy HTTP
+    #   - "8443:8443" # Proxy HTTPS
+    #   - "8001:8001" # Admin API HTTP
+    #   - "8444:8444" # Admin API HTTPS
+    #   - "8002:8002" # Kong Manager HTTP
+    #   - "8445:8445" # Kong Manager HTTPS
+    networks:
+      # - kong-net
+      - db
+      - web

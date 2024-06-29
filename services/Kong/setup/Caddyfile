@@ -1,0 +1,39 @@
+# Kong Manager GUI + Admin API (same domain, different paths)
+kong.{$CADDY_MAIN_DOMAIN} {
+	# Admin API on /admin path
+	handle /admin/* {
+		uri strip_prefix /admin
+		reverse_proxy kong-cp:8001 {
+			header_up X-Forwarded-Proto {scheme}
+			header_up X-Forwarded-For {remote_host}
+			header_up X-Forwarded-Port {server_port}
+			header_up X-Real-IP {remote_host}
+			header_up Host {host}
+		}
+	}
+
+	# Kong Manager GUI on root path
+	handle {
+		reverse_proxy kong-cp:8002 {
+			header_up X-Forwarded-Proto {scheme}
+			header_up X-Forwarded-For {remote_host}
+			header_up X-Forwarded-Port {server_port}
+			header_up X-Real-IP {remote_host}
+			header_up Host {host}
+		}
+	}
+
+	tls internal
+}
+
+# Kong API Gateway Proxy - HTTP/HTTPS traffic
+api.{$CADDY_MAIN_DOMAIN} {
+	reverse_proxy kong-cp:8000 {
+		header_up X-Forwarded-Proto {scheme}
+		header_up X-Forwarded-For {remote_host}
+		header_up X-Forwarded-Port {server_port}
+		header_up X-Real-IP {remote_host}
+		header_up Host {host}
+	}
+	tls internal
+}

@@ -1,0 +1,10 @@
+services:
+  adminer:
+    depends_on:
+      caddy:
+        condition: service_started
+    image: adminer
+    restart: always
+    networks:
+      - db
+      - web

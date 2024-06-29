@@ -1,0 +1,19 @@
+# Environment files
+*.env
+!*.env.example
+
+# Docker volumes and data
+volumes/
+cc_root/volumes/
+
+# Caddy data
+services/Caddy/data/
+services/Caddy/config/
+services/Caddy/static/
+
+# Scripts directory (except CSV data files)
+scripts/
+!scripts/nocodb/*.csv
+
+# Logs
+*.log

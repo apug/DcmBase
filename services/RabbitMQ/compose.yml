@@ -1,0 +1,38 @@
+services:
+  rabbitmq:
+    depends_on:
+      caddy:
+        condition: service_started
+    image: rabbitmq:4-management
+    hostname: rabbitmq
+    restart: unless-stopped
+    environment:
+      RABBITMQ_DEFAULT_USER: ${RABBITMQ_DEFAULT_USER:-admin}
+      RABBITMQ_DEFAULT_PASS: ${RABBITMQ_DEFAULT_PASS:-admin}
+      RABBITMQ_DEFAULT_VHOST: ${RABBITMQ_DEFAULT_VHOST:-/}
+    # Ports handled by Caddy reverse proxy
+    # Uncomment for direct access during debugging
+    # ports:
+    #   - "5672:5672" # AMQP port
+    #   - "15672:15672" # Management UI port
+    volumes:
+      - ${DCM_VOLUMES_DIR}/DCMBase/RabbitMQ/data:/var/lib/rabbitmq:z
+      - ${DCM_VOLUMES_DIR}/DCMBase/RabbitMQ/logs:/var/log/rabbitmq:z
+    networks:
+      - web # For Caddy reverse proxy
+    healthcheck:
+      test: rabbitmq-diagnostics -q ping
+      interval: 30s
+      timeout: 30s
+      retries: 3
+      start_period: 60s
+    security_opt:
+      - no-new-privileges:true
+    deploy:
+      resources:
+        limits:
+          memory: 1G
+        reservations:
+          memory: 512M
+    env_file:
+      - "${DCM_CONFIG_DIR}/config.env"
