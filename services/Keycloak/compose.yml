@@ -80,7 +80,7 @@ services:
         max-file: "3"
 
     volumes:
-      - ${DCM_VOLUMES_DIR}/DCMBase/Keycloak/cache:/opt/keycloak/data/cache:z
+      - ${DCM_VOLUMES_DIR}/DcmBase/Keycloak/cache:/opt/keycloak/data/cache:z
     tmpfs:
       - /tmp
       - /opt/keycloak/data/tmp

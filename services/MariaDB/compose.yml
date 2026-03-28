@@ -18,8 +18,8 @@ services:
     ports:
       - "3306:3306"
     volumes:
-      - ${DCM_VOLUMES_DIR}/DCMBase/MariaDB/data:/var/lib/mysql:z
-      - ${DCM_VOLUMES_DIR}/DCMBase/MariaDB/share:/tmp/share:z
+      - ${DCM_VOLUMES_DIR}/DcmBase/MariaDB/data:/var/lib/mysql:z
+      - ${DCM_VOLUMES_DIR}/DcmBase/MariaDB/share:/tmp/share:z
       - ./init:/docker-entrypoint-initdb.d:z
     networks:
       - db

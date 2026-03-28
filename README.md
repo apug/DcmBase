@@ -1,4 +1,4 @@
-# DCMBase
+# DcmBase
 
 Pacchetto di servizi infrastrutturali per [DCM](https://github.com/…/DCM) (Docker Collection Manager). Fornisce i componenti di base per un ambiente di sviluppo locale: reverse proxy, database, identity management, API gateway e message broker.
 
@@ -19,15 +19,15 @@ Pacchetto di servizi infrastrutturali per [DCM](https://github.com/…/DCM) (Doc
 
 ```bash
 # Abilitare i servizi desiderati
-dcm service enable DCMBase/Caddy
-dcm service enable DCMBase/Postgres
-dcm service enable DCMBase/Keycloak
+dcm service enable DcmBase/Caddy
+dcm service enable DcmBase/Postgres
+dcm service enable DcmBase/Keycloak
 # ...
 
 # Configurare ogni servizio (credenziali, dominio, ecc.)
-dcm service config DCMBase/Caddy
-dcm service config DCMBase/Postgres
-dcm service config DCMBase/Keycloak
+dcm service config DcmBase/Caddy
+dcm service config DcmBase/Postgres
+dcm service config DcmBase/Keycloak
 # ...
 
 # Avviare lo stack
@@ -180,12 +180,12 @@ services/<NomeServizio>/
 
 ## Configurazione
 
-Il dominio principale (`CADDY_MAIN_DOMAIN`) viene impostato durante `dcm service config DCMBase/Caddy` e utilizzato da tutti i servizi per generare gli URL dei sottodomini.
+Il dominio principale (`CADDY_MAIN_DOMAIN`) viene impostato durante `dcm service config DcmBase/Caddy` e utilizzato da tutti i servizi per generare gli URL dei sottodomini.
 
 Ogni servizio con stato (database, broker, ecc.) chiede interattivamente le credenziali durante la configurazione, proponendo valori di default per sviluppo locale.
 
 ## Note
 
 - Tutti i servizi usano certificati TLS interni generati da Caddy (flag `-k` con curl)
-- I dati persistenti sono salvati in `${DCM_VOLUMES_DIR}/DCMBase/<NomeServizio>/`
-- I servizi sono indirizzati come `DCMBase/<NomeServizio>` nei comandi DCM
+- I dati persistenti sono salvati in `${DCM_VOLUMES_DIR}/DcmBase/<NomeServizio>/`
+- I servizi sono indirizzati come `DcmBase/<NomeServizio>` nei comandi DCM

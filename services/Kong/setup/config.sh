@@ -42,7 +42,7 @@ KONG_ADMIN_GUI_API_URL=https://$kong_domain/admin
 KONG_PASSWORD=$DEFAULT_KONG_PASSWORD
 EOF
 
-kong_config_dir="$DCM_CONFIG_DIR/DCMBase/Kong"
+kong_config_dir="$DCM_CONFIG_DIR/DcmBase/Kong"
 mkdir -p "$kong_config_dir"
 
 if [ ! -f "$kong_config_dir/kong-plugins.yml" ]; then
@@ -60,7 +60,7 @@ if [ ! -f "$kong_config_dir/kong-plugins.yml" ]; then
 #     environment:
 #       KONG_PLUGINS: "bundled,my-plugin"
 #     volumes:
-#       - ${DCM_VOLUMES_DIR}/DCMBase/Kong/Plugins/my-plugin:/usr/local/share/lua/5.1/kong/plugins/my-plugin:ro,z
+#       - ${DCM_VOLUMES_DIR}/DcmBase/Kong/Plugins/my-plugin:/usr/local/share/lua/5.1/kong/plugins/my-plugin:ro,z
 #
 # Dopo ogni modifica: docker compose up -d --force-recreate kong-cp
 

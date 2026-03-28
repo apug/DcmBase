@@ -1,5 +1,5 @@
 include:
-  - ${DCM_CONFIG_DIR}/DCMBase/Kong/kong-plugins.yml
+  - ${DCM_CONFIG_DIR}/DcmBase/Kong/kong-plugins.yml
 
 # Common environment variables used by Kong services (bootstrap and CP)
 x-kong-config: &kong-env

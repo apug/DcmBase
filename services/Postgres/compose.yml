@@ -17,7 +17,7 @@ services:
       - "${DCM_CONFIG_DIR}/config.env"
       # - "${DCM_CONFIG_DIR}/postgresql/postgresql.env"
     volumes:
-      - ${DCM_VOLUMES_DIR}/DCMBase/Postgres/data:/var/lib/postgresql/data:z
+      - ${DCM_VOLUMES_DIR}/DcmBase/Postgres/data:/var/lib/postgresql/data:z
     ports:
       - "5432:5432"
     networks:

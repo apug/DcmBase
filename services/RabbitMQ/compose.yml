@@ -16,8 +16,8 @@ services:
     #   - "5672:5672" # AMQP port
     #   - "15672:15672" # Management UI port
     volumes:
-      - ${DCM_VOLUMES_DIR}/DCMBase/RabbitMQ/data:/var/lib/rabbitmq:z
-      - ${DCM_VOLUMES_DIR}/DCMBase/RabbitMQ/logs:/var/log/rabbitmq:z
+      - ${DCM_VOLUMES_DIR}/DcmBase/RabbitMQ/data:/var/lib/rabbitmq:z
+      - ${DCM_VOLUMES_DIR}/DcmBase/RabbitMQ/logs:/var/log/rabbitmq:z
     networks:
       - web # For Caddy reverse proxy
     healthcheck:
