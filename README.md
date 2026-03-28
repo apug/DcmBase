@@ -1,46 +1,49 @@
 # DcmBase
 
-Pacchetto di servizi infrastrutturali per [DCM](https://github.com/…/DCM) (Docker Collection Manager). Fornisce i componenti di base per un ambiente di sviluppo locale: reverse proxy, database, identity management, API gateway e message broker.
+Infrastructure services package for [DCM](https://github.com/apug/DCM) (Docker Collection Manager). Provides the core components for a local development environment: databases, identity management, API gateway, and message broker.
 
-## Servizi
+The reverse proxy (Caddy) is a built-in DCM service and is enabled automatically by `dcm init`.
 
-| Servizio | Immagine | URL | Descrizione |
-|----------|----------|-----|-------------|
-| **Caddy** | Custom (Dockerfile) | - | Reverse proxy con TLS automatico interno |
-| **PostgreSQL** | `postgres:17-alpine` | `localhost:5432` | Database relazionale (usato da Kong, Keycloak) |
-| **MariaDB** | `mariadb:lts` | `localhost:3306` | Database MySQL-compatible |
+## Services
+
+| Service | Image | URL | Description |
+|---------|-------|-----|-------------|
+| **PostgreSQL** | `postgres:17-alpine` | `localhost:5432` | Relational database (used by Kong, Keycloak) |
+| **MariaDB** | `mariadb:lts` | `localhost:3306` | MySQL-compatible database |
 | **Keycloak** | Custom (Dockerfile) | `https://kc.${CADDY_MAIN_DOMAIN}` | Identity & Access Management (OpenID Connect, SAML) |
 | **Kong** | `kong/kong-gateway:3.10` | `https://kong.${CADDY_MAIN_DOMAIN}` (GUI)<br>`https://api.${CADDY_MAIN_DOMAIN}` (Gateway) | API Gateway |
-| **RabbitMQ** | `rabbitmq:4-management` | `https://rabbit.${CADDY_MAIN_DOMAIN}` | Message broker con Management UI |
-| **Adminer** | `adminer` | `https://adminer.${CADDY_MAIN_DOMAIN}` | UI web per gestione database |
-| **Echo** | `mendhak/http-https-echo` | `https://echo1.${CADDY_MAIN_DOMAIN}`<br>`https://echo2.${CADDY_MAIN_DOMAIN}` | Due istanze echo server per test HTTP |
+| **RabbitMQ** | `rabbitmq:4-management` | `https://rabbit.${CADDY_MAIN_DOMAIN}` | Message broker with Management UI |
+| **Adminer** | `adminer` | `https://adminer.${CADDY_MAIN_DOMAIN}` | Web UI for database management |
+| **Echo** | `mendhak/http-https-echo` | `https://echo1.${CADDY_MAIN_DOMAIN}`<br>`https://echo2.${CADDY_MAIN_DOMAIN}` | Two echo server instances for HTTP testing |
 
-## Setup con DCM
+## Setup with DCM
 
 ```bash
-# Abilitare i servizi desiderati
-dcm service enable DcmBase/Caddy
-dcm service enable DcmBase/Postgres
-dcm service enable DcmBase/Keycloak
-# ...
+# Register and clone the repository
+dcm repo register git@github.com:myorg/dcm-base.git
+dcm repo update
 
-# Configurare ogni servizio (credenziali, dominio, ecc.)
-dcm service config DcmBase/Caddy
-dcm service config DcmBase/Postgres
-dcm service config DcmBase/Keycloak
-# ...
+# Enable desired services (interactive)
+dcm service enable
 
-# Avviare lo stack
+# Or enable all at once without prompts
+dcm service enable --yes
+
+# Or enable specific services
+dcm service enable DcmBase/Postgres DcmBase/Keycloak DcmBase/Kong
+
+# Start the stack
 dcm service up
 ```
 
-## Grafico delle Dipendenze
+## Dependency Graph
 
 ```mermaid
 graph TD
     bootstrap[Bootstrap]
+    caddy[Caddy - built-in]
 
-    bootstrap -->|completed| caddy[Caddy]
+    bootstrap -->|completed| caddy
     bootstrap -->|completed| postgresql[(PostgreSQL)]
     bootstrap -->|completed| mariadb[(MariaDB)]
 
@@ -70,85 +73,72 @@ graph TD
     class caddy proxy
 ```
 
-## Dettagli Servizi
-
-### Caddy
-
-Reverse proxy con TLS interno per sviluppo locale. Build custom con plugin `caddy-dns/ionos`.
-
-La configurazione Caddy viene composta da tre file generati durante `dcm service config`:
-
-- `Caddyfile.Before` — snippet e opzioni globali (gestito manualmente)
-- `Caddyfile.Services` — blocchi reverse proxy per servizio (generato da `dcm service enable/disable`)
-- `Caddyfile.After` — catch-all e redirect globali (gestito manualmente)
-
-**Porte esposte**: 80 (HTTP), 443 (HTTPS + HTTP/3)
+## Service Details
 
 ### PostgreSQL
 
-Database relazionale primario. Utilizzato come backend per Kong e Keycloak.
+Primary relational database. Used as the backend for Kong and Keycloak.
 
-Ogni servizio che necessita di un database PostgreSQL include uno script di inizializzazione in `setup/db/` che crea automaticamente utente e database dedicati.
+Each service that requires a PostgreSQL database includes an init script in `setup/db/` that automatically creates a dedicated user and database.
 
-**Porta esposta**: 5432
+**Exposed port**: 5432
 
 ### MariaDB
 
-Database MySQL-compatible. Include script di inizializzazione in `init/`:
+MySQL-compatible database. Includes init scripts in `init/`:
 
-- `00-create-webdev-user.sql` — crea utente `webdev` con accesso completo
-- `01-init-globetrotter-db.sh` — inizializza database per servizi esterni che lo richiedono
+- `00-create-webdev-user.sql` — creates a `webdev` user with full access
 
-General query log attivo per debug (`--general-log=1`).
+General query log enabled for debugging (`--general-log=1`).
 
-**Porta esposta**: 3306
+**Exposed port**: 3306
 
 ### Keycloak
 
-Identity provider con supporto OpenID Connect e SAML. Build custom ottimizzata con `kc.sh build`.
+Identity provider with OpenID Connect and SAML support. Custom build optimized with `kc.sh build`.
 
-Container di inizializzazione `keycloak-db-init` crea automaticamente utente e database su PostgreSQL prima dell'avvio.
+The `keycloak-db-init` init container automatically creates the user and database on PostgreSQL before startup.
 
-**URL**:
+**URLs**:
 - Console: `https://kc.${CADDY_MAIN_DOMAIN}`
 - Admin: `https://kcadmin.${CADDY_MAIN_DOMAIN}`
 
-**Risorse**: max 2 CPU, 2 GB RAM
+**Resources**: max 2 CPU, 2 GB RAM
 
 ### Kong
 
-API Gateway con architettura bootstrap + control plane:
+API Gateway with bootstrap + control plane architecture:
 
-1. `kong-db-init` — crea utente e database su PostgreSQL
-2. `kong-bootstrap` — esegue le migrazioni del database
-3. `kong-cp` — control plane con Admin API e Manager GUI
+1. `kong-db-init` — creates user and database on PostgreSQL
+2. `kong-bootstrap` — runs database migrations
+3. `kong-cp` — control plane with Admin API and Manager GUI
 
-**URL**:
+**URLs**:
 - Manager GUI: `https://kong.${CADDY_MAIN_DOMAIN}`
 - Admin API: `https://kong.${CADDY_MAIN_DOMAIN}/admin`
 - Gateway Proxy: `https://api.${CADDY_MAIN_DOMAIN}`
 
-> Le Admin API non hanno autenticazione. In produzione, proteggerle con RBAC o limitare l'accesso per IP.
+> The Admin API has no authentication. In production, protect it with RBAC or restrict access by IP.
 
 ### RabbitMQ
 
-Message broker con Management UI. Healthcheck integrato via `rabbitmq-diagnostics ping`.
+Message broker with Management UI. Built-in healthcheck via `rabbitmq-diagnostics ping`.
 
 **URL**: `https://rabbit.${CADDY_MAIN_DOMAIN}`
 
-**Risorse**: max 1 GB RAM
+**Resources**: max 1 GB RAM
 
 ### Adminer
 
-UI web per gestione database. Stateless, non richiede configurazione. Collegato alle reti `web` e `db` per accedere sia al reverse proxy che ai database.
+Stateless web UI for database management, requires no configuration. Connected to both `web` and `db` networks to access the reverse proxy and databases.
 
 **URL**: `https://adminer.${CADDY_MAIN_DOMAIN}`
 
 ### Echo
 
-Due istanze di `mendhak/http-https-echo` per test e debug HTTP. Ogni richiesta restituisce un JSON con headers, body, metodo e altre informazioni della richiesta ricevuta.
+Two instances of `mendhak/http-https-echo` for HTTP testing and debugging. Each request returns a JSON with headers, body, method, and other details of the received request.
 
-**URL**:
+**URLs**:
 - `https://echo1.${CADDY_MAIN_DOMAIN}`
 - `https://echo2.${CADDY_MAIN_DOMAIN}`
 
@@ -158,34 +148,28 @@ curl -k https://echo1.${CADDY_MAIN_DOMAIN}
 curl -k -X POST -d '{"test": true}' https://echo2.${CADDY_MAIN_DOMAIN}
 ```
 
-## Reti Docker
+## Docker Networks
 
-- **web** — servizi esposti tramite Caddy (reverse proxy)
-- **db** — comunicazione interna con i database
+- **web** — services exposed through Caddy (reverse proxy)
+- **db** — internal communication with databases
 
-## Struttura del Servizio
+## Service Structure Convention
 
-Ogni servizio segue la convenzione DCM:
+Each service follows the DCM convention:
 
 ```
-services/<NomeServizio>/
-  compose.yml              # Definizione Docker Compose
+services/<ServiceName>/
+  compose.yml              # Docker Compose definition
   setup/
-    config.sh              # Script di configurazione interattivo
-    Caddyfile              # Blocco reverse proxy per Caddy (opzionale)
-    db/                    # Script di init database (opzionale)
-  init/                    # Script di inizializzazione container (opzionale)
-  Dockerfile               # Build custom (opzionale)
+    config.sh              # Interactive configuration script
+    Caddyfile              # Reverse proxy block for Caddy (optional)
+    db/                    # Database init scripts (optional)
+  init/                    # Container init scripts (optional)
+  Dockerfile               # Custom build (optional)
 ```
 
-## Configurazione
+## Notes
 
-Il dominio principale (`CADDY_MAIN_DOMAIN`) viene impostato durante `dcm service config DcmBase/Caddy` e utilizzato da tutti i servizi per generare gli URL dei sottodomini.
-
-Ogni servizio con stato (database, broker, ecc.) chiede interattivamente le credenziali durante la configurazione, proponendo valori di default per sviluppo locale.
-
-## Note
-
-- Tutti i servizi usano certificati TLS interni generati da Caddy (flag `-k` con curl)
-- I dati persistenti sono salvati in `${DCM_VOLUMES_DIR}/DcmBase/<NomeServizio>/`
-- I servizi sono indirizzati come `DcmBase/<NomeServizio>` nei comandi DCM
+- All services use internal TLS certificates generated by Caddy (use `-k` with curl)
+- Persistent data is stored in `${DCM_VOLUMES_DIR}/DcmBase/<ServiceName>/`
+- Services are referenced as `DcmBase/<ServiceName>` in DCM commands
