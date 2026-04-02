@@ -1,0 +1,21 @@
+name: DcmBase
+summary: Core infrastructure services (databases, gateway, messaging)
+description: |
+  DcmBase provides foundational infrastructure services for a DCM stack:
+  relational databases, API gateway, identity management, message broker
+  and administration tools.
+services:
+  - name: Postgres
+    summary: PostgreSQL relational database
+  - name: MariaDB
+    summary: MariaDB relational database
+  - name: Keycloak
+    summary: Identity and access management (SSO, OAuth2, OIDC)
+  - name: Kong
+    summary: API gateway with Lua plugin support
+  - name: RabbitMQ
+    summary: AMQP message broker
+  - name: Adminer
+    summary: Web-based database management UI
+  - name: Echo
+    summary: Simple HTTP echo service for debugging
