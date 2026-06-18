@@ -1,4 +1,4 @@
-{$MAILPIT_DOMAIN} {
+mail.{$CADDY_MAIN_DOMAIN} {
 	reverse_proxy mailpit:8025 {
 		header_up X-Forwarded-Proto {scheme}
 		header_up X-Forwarded-For {remote_host}
