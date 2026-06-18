@@ -1,0 +1,14 @@
+services:
+  mailpit:
+    image: axllent/mailpit:latest
+    restart: unless-stopped
+    depends_on:
+      caddy:
+        condition: service_started
+    env_file:
+      - "${DCM_CONFIG_DIR}/config.env"
+    environment:
+      MP_SMTP_AUTH_ACCEPT_ANY: 1
+      MP_SMTP_AUTH_ALLOW_INSECURE: 1
+    networks:
+      - web
