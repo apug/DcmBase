@@ -8,13 +8,13 @@ printf '%b\n' "--- Kong Configuration ---" >&2
 
 # Get CADDY_MAIN_DOMAIN from existing config sources
 caddy_main_domain=""
-if [ -f "$CC_CONFIG_DIR/config.env" ]; then
-  caddy_main_domain=$(grep -oP '^CADDY_MAIN_DOMAIN=\K.*' "$CC_CONFIG_DIR/config.env" 2>/dev/null)
+if [ -f "$DCM_CONFIG_DIR/config.env" ]; then
+  caddy_main_domain=$(grep -oP '^CADDY_MAIN_DOMAIN=\K.*' "$DCM_CONFIG_DIR/config.env" 2>/dev/null)
 fi
-if [ -z "$caddy_main_domain" ] && [ -f "services/config/Base/Caddy/config.partial" ]; then
-  caddy_main_domain=$(grep -oP '^CADDY_MAIN_DOMAIN=\K.*' "services/config/Base/Caddy/config.partial" 2>/dev/null)
+if [ -z "$caddy_main_domain" ] && [ -f "$DCM_CONFIG_DIR/_dcm/Caddy/config.partial" ]; then
+  caddy_main_domain=$(grep -oP '^CADDY_MAIN_DOMAIN=\K.*' "$DCM_CONFIG_DIR/_dcm/Caddy/config.partial" 2>/dev/null)
 fi
-caddy_main_domain=${caddy_main_domain:-apug.it}
+caddy_main_domain=${caddy_main_domain:-localhost}
 
 read -p "KONG_PG_USER [$DEFAULT_KONG_PG_USER]: " kong_pg_user
 kong_pg_user=${kong_pg_user:-$DEFAULT_KONG_PG_USER}
