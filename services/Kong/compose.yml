@@ -52,7 +52,6 @@ services:
       kong-db-init:
         condition: service_completed_successfully
     image: "${GW_IMAGE:-kong/kong-gateway:3.10.0.2}" # Kong Gateway image (default to latest version)
-    container_name: kong-bootstrap
     # depends_on:
     #   kong-database:
     #     condition: service_healthy # Wait until Postgres is up and healthy
