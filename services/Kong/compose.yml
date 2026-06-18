@@ -31,7 +31,6 @@ services:
 
   kong-db-init:
     image: postgres:17-alpine
-    container_name: kong-db-init
     depends_on:
       postgresql:
         condition: service_healthy
