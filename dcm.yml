@@ -17,5 +17,7 @@ services:
     summary: AMQP message broker
   - name: Adminer
     summary: Web-based database management UI
+  - name: Mailpit
+    summary: SMTP testing server with web UI
   - name: Echo
     summary: Simple HTTP echo service for debugging

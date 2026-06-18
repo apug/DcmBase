@@ -14,6 +14,7 @@ The reverse proxy (Caddy) is a built-in DCM service and is enabled automatically
 | **Kong** | `kong/kong-gateway:3.10` | `https://kong.${CADDY_MAIN_DOMAIN}` (GUI)<br>`https://api.${CADDY_MAIN_DOMAIN}` (Gateway) | API Gateway |
 | **RabbitMQ** | `rabbitmq:4-management` | `https://rabbit.${CADDY_MAIN_DOMAIN}` | Message broker with Management UI |
 | **Adminer** | `adminer` | `https://adminer.${CADDY_MAIN_DOMAIN}` | Web UI for database management |
+| **Mailpit** | `axllent/mailpit` | `https://${MAILPIT_DOMAIN}` (GUI)<br>`mailpit:1025` (SMTP) | SMTP testing server with web UI |
 | **Echo** | `mendhak/http-https-echo` | `https://echo1.${CADDY_MAIN_DOMAIN}`<br>`https://echo2.${CADDY_MAIN_DOMAIN}` | Two echo server instances for HTTP testing |
 
 ## Setup with DCM
@@ -58,6 +59,7 @@ graph TD
 
     caddy -->|started| rabbitmq[RabbitMQ]
     caddy -->|started| adminer[Adminer]
+    caddy -->|started| mailpit[Mailpit]
     caddy -->|started| echo1[Echo 1]
     caddy -->|started| echo2[Echo 2]
 
@@ -69,7 +71,7 @@ graph TD
 
     class postgresql,mariadb database
     class bootstrap,kong-bootstrap,kong-db-init,keycloak-db-init lifecycle
-    class keycloak,kong-cp,rabbitmq,adminer,echo1,echo2 service
+    class keycloak,kong-cp,rabbitmq,adminer,mailpit,echo1,echo2 service
     class caddy proxy
 ```
 
@@ -133,6 +135,16 @@ Message broker with Management UI. Built-in healthcheck via `rabbitmq-diagnostic
 Stateless web UI for database management, requires no configuration. Connected to both `web` and `db` networks to access the reverse proxy and databases.
 
 **URL**: `https://adminer.${CADDY_MAIN_DOMAIN}`
+
+### Mailpit
+
+SMTP testing server with web UI. Accepts all outgoing mail from services on the Docker network without delivering it externally — useful for development.
+
+**SMTP**: `mailpit:1025` (internal Docker network, no TLS required)
+
+**URL**: `https://${MAILPIT_DOMAIN}` (default: `mail.${CADDY_MAIN_DOMAIN}`)
+
+Configure services to use `MAILPIT_SMTP_HOST` and `MAILPIT_SMTP_PORT` from `config.env`.
 
 ### Echo
 

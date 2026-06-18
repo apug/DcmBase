@@ -14,6 +14,7 @@ Il reverse proxy (Caddy) è un servizio built-in di DCM e viene abilitato automa
 | **Kong** | `kong/kong-gateway:3.10` | `https://kong.${CADDY_MAIN_DOMAIN}` (GUI)<br>`https://api.${CADDY_MAIN_DOMAIN}` (Gateway) | API Gateway |
 | **RabbitMQ** | `rabbitmq:4-management` | `https://rabbit.${CADDY_MAIN_DOMAIN}` | Message broker con Management UI |
 | **Adminer** | `adminer` | `https://adminer.${CADDY_MAIN_DOMAIN}` | UI web per gestione database |
+| **Mailpit** | `axllent/mailpit` | `https://${MAILPIT_DOMAIN}` (GUI)<br>`mailpit:1025` (SMTP) | Server SMTP di test con UI web |
 | **Echo** | `mendhak/http-https-echo` | `https://echo1.${CADDY_MAIN_DOMAIN}`<br>`https://echo2.${CADDY_MAIN_DOMAIN}` | Due istanze echo server per test HTTP |
 
 ## Setup con DCM
@@ -58,6 +59,7 @@ graph TD
 
     caddy -->|started| rabbitmq[RabbitMQ]
     caddy -->|started| adminer[Adminer]
+    caddy -->|started| mailpit[Mailpit]
     caddy -->|started| echo1[Echo 1]
     caddy -->|started| echo2[Echo 2]
 
@@ -69,7 +71,7 @@ graph TD
 
     class postgresql,mariadb database
     class bootstrap,kong-bootstrap,kong-db-init,keycloak-db-init lifecycle
-    class keycloak,kong-cp,rabbitmq,adminer,echo1,echo2 service
+    class keycloak,kong-cp,rabbitmq,adminer,mailpit,echo1,echo2 service
     class caddy proxy
 ```
 
@@ -133,6 +135,16 @@ Message broker con Management UI. Healthcheck integrato via `rabbitmq-diagnostic
 UI web stateless per gestione database, non richiede configurazione. Collegato alle reti `web` e `db` per accedere sia al reverse proxy che ai database.
 
 **URL**: `https://adminer.${CADDY_MAIN_DOMAIN}`
+
+### Mailpit
+
+Server SMTP di test con UI web. Accetta tutta la posta in uscita dai servizi sulla rete Docker senza consegnarla realmente — utile in sviluppo.
+
+**SMTP**: `mailpit:1025` (rete Docker interna, no TLS)
+
+**URL**: `https://${MAILPIT_DOMAIN}` (default: `mail.${CADDY_MAIN_DOMAIN}`)
+
+Configurare i servizi per usare `MAILPIT_SMTP_HOST` e `MAILPIT_SMTP_PORT` da `config.env`.
 
 ### Echo
 
