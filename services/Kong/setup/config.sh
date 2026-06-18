@@ -14,7 +14,7 @@ fi
 if [ -z "$caddy_main_domain" ] && [ -f "$DCM_CONFIG_DIR/_dcm/Caddy/config.partial" ]; then
   caddy_main_domain=$(grep -oP '^CADDY_MAIN_DOMAIN=\K.*' "$DCM_CONFIG_DIR/_dcm/Caddy/config.partial" 2>/dev/null)
 fi
-caddy_main_domain=${caddy_main_domain:-localhost}
+caddy_main_domain=${caddy_main_domain:-apug.it}
 
 read -p "KONG_PG_USER [$DEFAULT_KONG_PG_USER]: " kong_pg_user
 kong_pg_user=${kong_pg_user:-$DEFAULT_KONG_PG_USER}
